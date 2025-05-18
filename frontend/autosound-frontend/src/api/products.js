@@ -1,4 +1,4 @@
-import api from './http';
+import api from './axios';
 
 export const getProducts = async (params = {}) => {
   const response = await api.get('/products/products/', { params });
@@ -23,4 +23,12 @@ export const getBrands = async () => {
 export const createProductReview = async (slug, reviewData) => {
   const response = await api.post(`/products/products/${slug}/reviews/`, reviewData);
   return response.data;
+};
+
+export default {
+  getProducts,
+  getProductBySlug,
+  getCategories,
+  getBrands,
+  createProductReview
 };

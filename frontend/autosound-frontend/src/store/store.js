@@ -16,3 +16,6 @@ export const store = configureStore({
       serializableCheck: false,
     }),
 });
+
+// Exporta el store como objeto nombrado
+export default store;
