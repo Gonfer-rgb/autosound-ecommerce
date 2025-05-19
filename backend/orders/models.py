@@ -14,33 +14,38 @@ class Order(models.Model):
         REFUNDED = 'refunded', _('Refunded')
 
     class PaymentMethod(models.TextChoices):
-        CASH = 'cash', _('Cash')
+        CASH = 'cash', _('Cash on Delivery')
         CARD = 'card', _('Credit/Debit Card')
         PAYPAL = 'paypal', _('PayPal')
+        TRANSFER = 'transfer', _('Bank Transfer')
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     order_number = models.CharField(max_length=20, unique=True)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
-    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PaymentMethod.choices,
+        default=PaymentMethod.CASH
+    )
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
-    tax = models.DecimalField(max_digits=10, decimal_places=2)
-    shipping_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2)
-    shipping_address = models.JSONField()
-    billing_address = models.JSONField(null=True, blank=True)
-    notes = models.TextField(blank=True)
+    shipping_address = models.TextField()
+    billing_address = models.TextField(blank=True)
+    note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['order_number']),
-            models.Index(fields=['status']),
-        ]
 
     def __str__(self):
-        return f"Order #{self.order_number} - {self.user.email}"
+        return f"Order #{self.order_number} by {self.user.email}"
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
@@ -51,9 +56,20 @@ class OrderItem(models.Model):
     total = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['order', 'product'], name='unique_order_product')
-        ]
+        verbose_name = "Order Item"
+        verbose_name_plural = "Order Items"
 
     def __str__(self):
-        return f"{self.quantity}x {self.product.name} @ {self.price}"
+        return f"{self.quantity} x {self.product.name} (Order #{self.order.order_number})"
+
+class Payment(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id = models.CharField(max_length=100, blank=True)
+    payment_method = models.CharField(max_length=50)
+    status = models.CharField(max_length=20, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Payment for Order #{self.order.order_number}"
