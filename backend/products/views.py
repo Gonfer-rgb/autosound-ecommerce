@@ -1,4 +1,6 @@
-from rest_framework import viewsets, filters, permissions
+from rest_framework import viewsets, filters
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .permissions import IsAdminUserOrReadOnly, IsOwnerOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Category, Brand, Product, ProductReview
 from .serializers import (CategorySerializer, BrandSerializer, 
@@ -8,13 +10,13 @@ from .serializers import (CategorySerializer, BrandSerializer,
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAdminUserOrReadOnly]
+    permission_classes = [IsAdminUserOrReadOnly]
     lookup_field = 'slug'
 
 class BrandViewSet(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
-    permission_classes = [permissions.IsAdminUserOrReadOnly]
+    permission_classes = [IsAdminUserOrReadOnly]
     lookup_field = 'slug'
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -24,7 +26,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description', 'sku']
     ordering_fields = ['price', 'created_at']
     ordering = ['-created_at']
-    permission_classes = [permissions.IsAdminUserOrReadOnly]
+    permission_classes = [IsAdminUserOrReadOnly]
     lookup_field = 'slug'
 
     def get_serializer_class(self):
@@ -37,7 +39,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 class ProductReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ProductReviewSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def get_queryset(self):
         product_slug = self.kwargs.get('product_slug')
@@ -47,3 +49,6 @@ class ProductReviewViewSet(viewsets.ModelViewSet):
         product_slug = self.kwargs.get('product_slug')
         product = Product.objects.get(slug=product_slug)
         serializer.save(user=self.request.user, product=product)
+
+    def perform_update(self, serializer):
+        serializer.save(user=self.request.user)
