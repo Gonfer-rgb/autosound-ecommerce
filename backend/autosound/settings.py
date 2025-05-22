@@ -63,9 +63,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME', 'autosound_db'),
         'USER': os.getenv('DB_USER', 'autosound_user'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'Firestone01'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'Firestone02'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
+        'OPTIONS': {
+            'client_encoding': 'UTF8',
+        }
     }
 }
 
